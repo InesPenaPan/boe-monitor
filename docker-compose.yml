@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # 1. Ollama
+  ollama:
+    image: ollama/ollama:latest
+    container_name: boe_ollama
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    networks:
+      - boe_net
+    deploy:
+      resources:
+        limits:
+          memory: 1200M
+
+  # 2. n8n
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: boe_n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=false
+      - GENERIC_TIMEZONE=Europe/Madrid
+      - TZ=Europe/Madrid
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+    volumes:
+      - ./n8n_data:/home/node/.n8n
+    networks:
+      - boe_net
+    depends_on:
+      - ollama
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # 3. Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: boe_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    networks:
+      - boe_net
+    depends_on:
+      - n8n
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+networks:
+  boe_net:
+    driver: bridge
+
+volumes:
+  ollama_data:
