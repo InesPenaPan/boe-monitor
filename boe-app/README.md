@@ -1,16 +1,28 @@
-# React + Vite
+# 🏛️ BOE Public Grants & Subsidies Monitor: Web Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> A modern, accessible web interface built with **React**, **Vite**, and **Tailwind CSS**. The platform provides a structured way to query, filter, and monitor official grant announcements, financial incentives, and public subsidies published in the **Boletín Oficial del Estado (BOE)**.
 
-Currently, two official plugins are available:
+The portal offers a streamlined, citizen- and business-centric view designed to:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+* Connect to a local scraping and ingestion pipeline processing official BOE calls.
+* Display at a glance the maximum allocated budget, issuing authority, and submission deadline.
+* Filter open calls by target beneficiary profile (**Pymes**, **Autónomos**, **Estudiantes**, **General**).
+* Review essential eligibility criteria and requirements in a clean, summarized format.
+* Provide a direct link to the full official legal publication on the official BOE portal.
 
-## React Compiler
+## 📋 Prerequisites
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Before running this frontend application locally, make sure you have:
 
-## Expanding the ESLint configuration
+| Requirement | Details |
+| :--- | :--- |
+| **Node.js & npm** | Node v18+ (v20+ recommended) and `npm` package manager installed. |
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🚀 Running the app
+
+In your project terminal, install the dependencies (if you haven't already) and start the Vite development server:
+
+```bash
+npm install
+npm run dev
+```
