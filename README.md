@@ -1,4 +1,4 @@
-# 📑 BOE Public Grants & Subsidies Monitor
+# 📜 BOE Public Grants & Subsidies Monitor
 
 > An end-to-end, automated, and containerized tracking platform engineered to scrape public grants and subsidies from the Spanish Official State Gazette (BOE), transform unstructured legal text into actionable metadata using LLM semantic parsing, persist normalized records into MySQL, and display categorized opportunities through a web client.
 
