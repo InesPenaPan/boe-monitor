@@ -1,0 +1,325 @@
+{
+  "name": "BOE - Ingestion Pipeline",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "895eb41c-f2b8-40e6-b81d-b1469fb90d22",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        208
+      ],
+      "id": "9f175e9e-57fa-43ae-b696-839f4ea5ea36",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = [];\nconst TOTAL_DAYS = 30;\n\nfor (let i = 0; i < TOTAL_DAYS; i++) {\n  const d = new Date();\n  d.setDate(d.getDate() - i);\n\n  // Skip Sundays\n  if (d.getDay() !== 0) {\n    const yyyy = d.getFullYear();\n    const mm = String(d.getMonth() + 1).padStart(2, '0');\n    const dd = String(d.getDate()).padStart(2, '0');\n    items.push({\n      json: {\n        dateStr: `${yyyy}${mm}${dd}`\n      }\n    });\n  }\n}\n\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        96
+      ],
+      "id": "2893bc80-a983-4f5f-a75d-a13300cf5ec4",
+      "name": "Code: Generate Dates"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        496,
+        96
+      ],
+      "id": "b3636e91-b787-448b-a575-4e80598d8266",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "url": "=https://www.boe.es/datosabiertos/api/boe/sumario/{{ $json.dateStr }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        736,
+        112
+      ],
+      "id": "e1476ee8-ec97-4473-97c4-cdc4b4c42739",
+      "name": "HTTP: Daily Summary",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.skip ? 'https://www.boe.es' : $json.url_boe }}",
+        "options": {
+          "response": {
+            "response": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1200,
+        96
+      ],
+      "id": "1c9698bc-f750-4bb7-942a-c099349dbfb4",
+      "name": "HTTP Request1",
+      "executeOnce": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Eres un analista experto en convocatorias del BOE. Si el texto no es una convocatoria de ayuda válida, devuelve campos por defecto. Si lo es, extrae rigurosamente los datos del siguiente texto:\n\nTEXTO DEL BOE:\n{{ $json.data ? $json.data.slice(0, 14000) : JSON.stringify($json).slice(0, 14000) }}\n\nDevuelve EXCLUSIVAMENTE un JSON estricto con esta estructura:\n{\n  \"cuantia\": \"Importe total o por beneficiario (ej: 'Hasta 12.000 €')\",\n  \"fecha_limite\": \"Plazo exacto de presentación (ej: '20 días hábiles tras publicación')\",\n  \"requisitos\": [\n    \"Requisito 1 clave\",\n    \"Requisito 2 clave\"\n  ]\n}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1456,
+        80
+      ],
+      "id": "7f7d808e-1cdc-4878-ab36-68d02d2ef86f",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO grants (boe_id, titulo_limpio, organo, perfil, cuantia, fecha_limite, requisitos, url_boe)\nSELECT \n  '{{ $json.boe_id }}',\n  '{{ $json.titulo_limpio ? $json.titulo_limpio.replace(/'/g, \"''\") : \"\" }}',\n  '{{ $json.organo ? $json.organo.replace(/'/g, \"''\") : \"\" }}',\n  '{{ $json.perfil }}',\n  '{{ $json.cuantia }}',\n  '{{ $json.fecha_limite }}',\n  CAST('{{ $json.requisitos || \"[]\" }}' AS JSON),\n  '{{ $json.url_boe }}'\nWHERE '{{ $json.skip }}' = 'false' AND '{{ $json.boe_id }}' != ''\nON DUPLICATE KEY UPDATE \n  titulo_limpio = VALUES(titulo_limpio),\n  cuantia = VALUES(cuantia),\n  fecha_limite = VALUES(fecha_limite),\n  requisitos = VALUES(requisitos);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        1808,
+        272
+      ],
+      "id": "cdc5ec09-4520-4963-9819-296c5ff84eeb",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "mySql": {
+          "id": "Y4ziTlTZp1RrsdCR",
+          "name": "Local MySQL DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        1456,
+        240
+      ],
+      "id": "c05ec1a2-e39f-434e-bd95-859cb7ad9144",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "SVUrxxEx8Dw3jLyn",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = [];\nconst incoming = $input.first()?.json;\n\n// If the request failed or returned empty, emit a dummy record so as not to break the loop\nif (!incoming) {\n  return [{ json: { skip: true, boe_id: '', url_boe: '' } }];\n}\n\nconst root = incoming.data || incoming;\nconst sumario = root.sumario || root;\n\nlet diario = null;\nif (Array.isArray(sumario.diario)) {\n  diario = sumario.diario[0];\n} else if (sumario.diario) {\n  diario = sumario.diario;\n}\n\nif (!diario || !diario.seccion) {\n  return [{ json: { skip: true, boe_id: '', url_boe: '' } }];\n}\n\nconst secciones = Array.isArray(diario.seccion) ? diario.seccion : [diario.seccion];\n\n// Official sections where grants/aid are published: III and V-B\nconst ALLOWED_SECTIONS = ['3', '5B'];\n\n// Mandatory terms for grants/aid\nconst STRICT_GRANT_REGEX = /\\b(subvenci[oó]n|subvenciones|ayuda|ayudas|beca|becas)\\b/i;\n\n// Standard noise exclusion\nconst EXCLUDE_REGEX = /extrav[ií]o de t[ií]tulo|duplicado de t[ií]tulo|recurso contencioso|licitaci[oó]n|formalizaci[oó]n de contrato/i;\n\nfor (const sec of secciones) {\n  if (!sec || !sec.codigo || !ALLOWED_SECTIONS.includes(String(sec.codigo))) continue;\n  if (!sec.departamento) continue;\n\n  const depts = Array.isArray(sec.departamento) ? sec.departamento : [sec.departamento];\n\n  for (const dept of depts) {\n    if (!dept || !dept.item) continue;\n    const rows = Array.isArray(dept.item) ? dept.item : [dept.item];\n\n    for (const item of rows) {\n      const titulo = item.titulo || '';\n\n      if (STRICT_GRANT_REGEX.test(titulo) && !EXCLUDE_REGEX.test(titulo) && item.identificador) {\n        let perfil = 'General';\n        if (/pyme|pymes|empresas|emprendedor|startup|comercio|competitividad/i.test(titulo)) perfil = 'Pymes';\n        else if (/aut[oó]nomo|cuenta propia|trabajador aut[oó]nomo/i.test(titulo)) perfil = 'Autónomos';\n        else if (/estudiante|alumn|investigad|predoctoral|postdoctoral|beca|formaci[oó]n/i.test(titulo)) perfil = 'Estudiantes e Investigadores';\n        else if (/agricult|ganader|rural|pesca/i.test(titulo)) perfil = 'Sector Primario';\n\n        const moneyMatch = titulo.match(/\\d+([.,]\\d+)*\\s*(€|euros)/i);\n\n        items.push({\n          json: {\n            skip: false,\n            boe_id: item.identificador,\n            titulo_limpio: titulo,\n            organo: dept.nombre || 'Administración Pública',\n            perfil: perfil,\n            cuantia_previa: moneyMatch ? moneyMatch[0] : null,\n            url_boe: item.url_html || `https://www.boe.es/diario_boe/txt.php?id=${item.identificador}`\n          }\n        });\n      }\n    }\n  }\n}\n\nif (items.length === 0) {\n  return [{ json: { skip: true, boe_id: '', url_boe: '' } }];\n}\n\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        976,
+        96
+      ],
+      "id": "7bb8521d-35f5-4463-b083-38f7cde633b0",
+      "name": "Code: Filter Grants"
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $('Code: Filter Grants').item.json;\nconst aiRaw = $input.item.json;\n\n// Si el día venía marcado para omitir\nif (prev.skip || !prev.boe_id) {\n  return {\n    skip: true,\n    boe_id: '',\n    titulo_limpio: '',\n    organo: '',\n    perfil: '',\n    cuantia: '',\n    fecha_limite: '',\n    requisitos: '[]',\n    url_boe: ''\n  };\n}\n\nlet parsed = {\n  cuantia: prev.cuantia_previa || 'Consultar bases reguladoras',\n  fecha_limite: 'Consultar plazo en bases oficiales',\n  requisitos: ['Cumplir condiciones fijadas en la sede electrónica del órgano convocante.']\n};\n\ntry {\n  const content = aiRaw.text || aiRaw.response?.text || aiRaw.output || aiRaw;\n  const match = typeof content === 'string' ? content.match(/\\{[\\s\\S]*\\}/) : null;\n  if (match) {\n    const data = JSON.parse(match[0]);\n    if (data.cuantia) parsed.cuantia = data.cuantia;\n    if (data.fecha_limite) parsed.fecha_limite = data.fecha_limite;\n    if (Array.isArray(data.requisitos) && data.requisitos.length > 0) {\n      parsed.requisitos = data.requisitos;\n    }\n  }\n} catch (e) {\n  // Mantener valores de respaldo si el parseo falla\n}\n\nreturn {\n  skip: false,\n  boe_id: prev.boe_id,\n  titulo_limpio: prev.titulo_limpio,\n  organo: prev.organo,\n  perfil: prev.perfil,\n  cuantia: String(parsed.cuantia).slice(0, 250),\n  fecha_limite: String(parsed.fecha_limite).slice(0, 250),\n  requisitos: JSON.stringify(parsed.requisitos),\n  url_boe: prev.url_boe\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1808,
+        80
+      ],
+      "id": "03d8ab22-8a71-49e2-b51b-f1c351fd37b0",
+      "name": "Code: Format for MySQL"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Code: Generate Dates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code: Generate Dates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP: Daily Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Generate Dates": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Daily Summary": {
+      "main": [
+        [
+          {
+            "node": "Code: Filter Grants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code: Format for MySQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Filter Grants": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Format for MySQL": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "af0e0e02-eeff-4a6f-88a8-84b952ef982f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "19eeb70c11fcb19c93b8e1a485fc00f0d7ccbebbe2827231991de900380af01c"
+  },
+  "nodeGroups": [],
+  "id": "851bJPwgBIhG4dek",
+  "tags": []
+}

@@ -1,63 +1,43 @@
 version: '3.8'
 
 services:
-  ollama:
-    image: ollama/ollama:latest
-    container_name: boe_ollama
-    restart: unless-stopped
-    volumes:
-      - ollama_data:/root/.ollama
-    ports:
-      - "11434:11434"
-    networks:
-      - boe_net
-    deploy:
-      resources:
-        limits:
-          memory: 1200M
-
   n8n:
     image: docker.n8n.io/n8nio/n8n:latest
-    container_name: boe_n8n
-    restart: unless-stopped
+    container_name: boe-n8n
+    restart: always
     ports:
       - "5678:5678"
     environment:
-      - N8N_BASIC_AUTH_ACTIVE=false
-      - GENERIC_TIMEZONE=Europe/Madrid
-      - TZ=Europe/Madrid
-      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=http://localhost:5678/
     volumes:
       - ./n8n_data:/home/node/.n8n
-    networks:
-      - boe_net
     depends_on:
-      - ollama
-    deploy:
-      resources:
-        limits:
-          memory: 512M
+      - mysql
+
+  mysql:
+    image: mysql:8.0
+    container_name: boe-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./mysql_data:/var/lib/mysql
 
   frontend:
     build:
       context: ./boe-app
-      dockerfile: Dockerfile
-    container_name: boe_frontend
-    restart: unless-stopped
+    container_name: boe-frontend
+    restart: always
     ports:
       - "3000:80"
-    networks:
-      - boe_net
     depends_on:
       - n8n
-    deploy:
-      resources:
-        limits:
-          memory: 128M # Ultra-low footprint for static Nginx serving; pairs with lightweight models like Llama 3.2 to fit strict host memory budgets.
-
-networks:
-  boe_net:
-    driver: bridge
-
-volumes:
-  ollama_data:

@@ -1,5 +1,6 @@
-# n8n local data and SQLite database (contains credentials and runtime data)
 n8n_data/
+
+mysql_data/
 
 # Dependencies
 node_modules/
