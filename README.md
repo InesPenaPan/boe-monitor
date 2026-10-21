@@ -10,7 +10,7 @@ The ecosystem operates as a distributed system with standardized network boundar
 | :--- | :--- | :--- | :--- |
 | **`boe-frontend`** | `3000` | React , Vite, Tailwind CS | Displays official grant and subsidy information. |
 | **`n8n`** | `5678` | n8n Workflow Automation | Daily automated ingestion pipelines, 30-day lookback loops, legal text fetching, LLM orchestration, and REST API exposure. |
-| **`mysql`** | `3306` | Persistent relational data store with native JSON schema validation for eligibility requirements and deduplication indexes. |
+| **`mysql`** | `3306` | MysQL 8.0 | Persistent relational data store with native JSON schema validation for eligibility requirements and deduplication indexes. |
 
 ## 📋 Prerequisites
 

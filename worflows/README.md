@@ -48,17 +48,14 @@
     * Generates a 30-day lookup window excluding Sundays (when the official regular bulletin is not published).
     * Produces formatted date strings (`YYYYMMDD`) to iterate over the BOE daily summary endpoint.
 
-2. **Loop Resilience & Batch Control (`Loop Over Items`)**:
-    * Iterates through the date array one day at a time (`batchSize: 1`).
-    * Ensures continuous execution even if a specific day contains no matching records by passing controlled fallback records back to the loop origin.
+2. **Loop Resilience & Batch Control (`Loop Over Items`)**: Iterates through the date array one day at a time (`batchSize: 1`).
 
 3. **Summary Fetching & Grant Filtering (`HTTP: Daily Summary`  & `Code: Filter Grants`)**:
     * Hits `https://www.boe.es/datosabiertos/api/boe/sumario/{YYYYMMDD`
     * Filters only eligible official sections: **Section III (Other Dispositions)** and **Section V-B (Other Public Announcements)**.
     * Applies strict regular expressions to isolate grants, scholarships, and subsidies (subvención, ayuda, beca) while actively filtering out irrelevant administrative notices (lost university degree certificates, administrative appeals, procurement tenders).
 
-4. **Full Document Retrieval (`HTTP Request: Fetch Doc Texts`)**:
-    * Downloads the full publication text using the direct URL or document endpoint.
+4. **Full Document Retrieval (`HTTP Request: Fetch Doc Texts`)**: Downloads the full publication text using the direct URL or document endpoint.
 
 5. **LLM Semantic Parsing (`Basic LLM Chain` + `Google Gemini Chat Model`)**:
     * Powered by `gemini-2.5-flash`.
