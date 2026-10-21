@@ -60,7 +60,8 @@
 5. **LLM Semantic Parsing (`Basic LLM Chain` + `Google Gemini Chat Model`)**:
     * Powered by `gemini-2.5-flash`.
     * Truncates input payload to 14,000 characters to cover regulatory bases, objectives, and eligibility conditions without exceeding context or token budgets.
-    * Enforces strict JSON extraction: 
+    * Enforces strict JSON extraction:
+      
     ```JSON
     {
         "cuantia": "Exact budget, maximum funding, or subsidy percentage",
