@@ -1,4 +1,4 @@
-# 🏛️ BOE Public Grants & Subsidies Monitor: Web Client
+# 🏛️ BOE Monitor: Web Client
 
 > A modern, accessible web interface built with **React**, **Vite**, and **Tailwind CSS**. The platform provides a structured way to query, filter, and monitor official grant announcements, financial incentives, and public subsidies published in the **Boletín Oficial del Estado (BOE)**.
 
