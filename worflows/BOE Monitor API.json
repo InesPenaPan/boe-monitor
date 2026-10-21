@@ -1,0 +1,85 @@
+{
+  "name": "BOE Monitor API",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "grants",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ec92a7c4-d675-416c-bb58-15e880b468f1",
+      "name": "Webhook",
+      "webhookId": "0258e874-14f6-4317-817d-4ab2090003e2"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      boe_id: \"BOE-B-2026-1042\",\n      titulo_limpio: \"Subvenciones para la digitalización e implantación de soluciones IA en pymes\",\n      organo: \"Ministerio de Industria y Turismo\",\n      perfil: \"Pymes\",\n      cuantia: \"Hasta 30.000 €\",\n      fecha_limite: \"15/11/2026\",\n      requisitos: [\n        \"Domicilio fiscal en territorio español\",\n        \"Plantilla de 10 a 49 empleados\",\n        \"Estar al corriente de pagos con AEAT y Seguridad Social\"\n      ],\n      url_boe: \"https://www.boe.es\"\n    }\n  },\n  {\n    json: {\n      boe_id: \"BOE-A-2026-8911\",\n      titulo_limpio: \"Ayudas directas al fomento del trabajo autónomo y transición energética\",\n      organo: \"Ministerio de Trabajo y Economía Social\",\n      perfil: \"Autónomos\",\n      cuantia: \"4.500 €\",\n      fecha_limite: \"30/12/2026\",\n      requisitos: [\n        \"Alta en el Régimen Especial de Trabajadores Autónomos (RETA)\",\n        \"Antigüedad mínima de 6 meses ininterrumpidos\"\n      ],\n      url_boe: \"https://www.boe.es\"\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "66c6bd55-046b-4c40-b2f9-a6c414cc526d",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "4a4f5f91-6e0a-4888-9c6b-2f8ae63c2c78",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ca0a24eb-6a66-46b6-ae0b-2ec71bef8c03",
+  "meta": {
+    "instanceId": "19eeb70c11fcb19c93b8e1a485fc00f0d7ccbebbe2827231991de900380af01c"
+  },
+  "nodeGroups": [],
+  "id": "ZFVKrmDZl5xKb9QW",
+  "tags": []
+}

@@ -4,7 +4,7 @@ import HeroBanner from '../components/HeroBanner';
 import Footer from '../components/Footer';
 
 const CATEGORIES = ['Todas', 'Pymes', 'Autónomos', 'Estudiantes', 'General'];
-const API_URL = 'http://localhost:5678/webhook/ayudas';
+const API_URL = 'http://localhost:5678/webhook/grants';
 
 /**
  * GrantsPage component that handles state management, API data fetching,
